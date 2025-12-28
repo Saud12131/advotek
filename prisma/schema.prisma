@@ -1,8 +1,6 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+// =====================================
+// Prisma Client & DB
+// =====================================
 
 generator client {
   provider = "prisma-client-js"
@@ -12,19 +10,94 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+// =====================================
+// ENUMS
+// =====================================
+
 enum Role {
-  USER
-  LAWYER
+  DOCTOR
+  PATIENT
 }
 
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+// =====================================
+// USER (Auth Only)
+// =====================================
+
 model User {
-  id            Int      @id @default(autoincrement())
-  email         String   @unique
-  name          String?
-  phone         String   @unique
-  password      String
-  role          Role     @default(USER)
-  barCouncilId  String?  @unique
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  role      Role
+  createdAt DateTime @default(now())
+
+  doctor    Doctor?
+  patient   Patient?
+}
+
+// =====================================
+// DOCTOR (Professional Profile)
+// =====================================
+
+model Doctor {
+  id        String   @id @default(uuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  fullName  String
+  speciality String
+  clinicName String?
+  phone     String?
+
+  prescriptions Prescription[]
+
+  createdAt DateTime @default(now())
+}
+
+// =====================================
+// PATIENT (Independent Profile)
+// =====================================
+
+model Patient {
+  id        String   @id @default(uuid())
+  userId    String?  @unique
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  fullName  String
+  age       Int?
+  gender    Gender?
+  phone     String?
+
+  prescriptions Prescription[]
+
+  createdAt DateTime @default(now())
+}
+
+// =====================================
+// PRESCRIPTION (CORE ENTITY)
+// =====================================
+
+model Prescription {
+  id        String   @id @default(uuid())
+
+  patientId String
+  patient   Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
+
+  doctorId  String
+  doctor    Doctor   @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+
+  diagnosis String?
+  medicines Json
+  notes     String?
+
+  createdAt DateTime @default(now())
+
+  @@index([patientId])
+  @@index([doctorId])
 }
