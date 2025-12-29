@@ -41,9 +41,6 @@ model User {
   patient   Patient?
 }
 
-// =====================================
-// DOCTOR (Professional Profile)
-// =====================================
 
 model Doctor {
   id        String   @id @default(uuid())
@@ -60,9 +57,6 @@ model Doctor {
   createdAt DateTime @default(now())
 }
 
-// =====================================
-// PATIENT (Independent Profile)
-// =====================================
 
 model Patient {
   id        String   @id @default(uuid())
