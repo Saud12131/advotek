@@ -1,5 +1,5 @@
 // =====================================
-// Prisma Client & DB
+// Prisma Client & Database
 // =====================================
 
 generator client {
@@ -27,7 +27,7 @@ enum Gender {
 }
 
 // =====================================
-// USER (Auth Only)
+// USER (AUTH ONLY)
 // =====================================
 
 model User {
@@ -37,44 +37,95 @@ model User {
   role      Role
   createdAt DateTime @default(now())
 
+  // Relations
   doctor    Doctor?
   patient   Patient?
-}
+  accounts  Account[]
+  sessions  Session[]
 
-
-model Doctor {
-  id        String   @id @default(uuid())
-  userId    String   @unique
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  fullName  String
-  speciality String
-  clinicName String?
-  phone     String?
-
-  prescriptions Prescription[]
-
-  createdAt DateTime @default(now())
-}
-
-
-model Patient {
-  id        String   @id @default(uuid())
-  userId    String?  @unique
-  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
-
-  fullName  String
-  age       Int?
-  gender    Gender?
-  phone     String?
-
-  prescriptions Prescription[]
-
-  createdAt DateTime @default(now())
+  @@index([role])
 }
 
 // =====================================
-// PRESCRIPTION (CORE ENTITY)
+// AUTH.JS TABLES (REQUIRED)
+// =====================================
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// =====================================
+// DOCTOR PROFILE
+// =====================================
+
+model Doctor {
+  id         String   @id @default(uuid())
+  userId     String   @unique
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  fullName   String
+  speciality String
+  clinicName String?
+  phone      String?
+
+  prescriptions Prescription[]
+
+  createdAt  DateTime @default(now())
+}
+
+// =====================================
+// PATIENT PROFILE
+// =====================================
+
+model Patient {
+  id         String   @id @default(uuid())
+  userId     String?  @unique
+  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  fullName   String
+  age        Int?
+  gender     Gender?
+  phone      String?
+
+  prescriptions Prescription[]
+
+  createdAt  DateTime @default(now())
+}
+
+// =====================================
+// PRESCRIPTION (CORE DOMAIN ENTITY)
 // =====================================
 
 model Prescription {
